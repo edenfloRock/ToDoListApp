@@ -6,7 +6,10 @@ import sqlite3
 
 # Let's create the form class first so we can get some data
 class FormContainer(UserControl):
-    def __init__(self):
+    # At this point, we can pass in a function from the main() so we can expand. minimize the format
+    # go back to the FormContainer() and add a argument as such...
+    def __init__(self, func):
+        self.func = func
         super().__init__()
 
     def build(self):
@@ -14,26 +17,190 @@ class FormContainer(UserControl):
             width=280,
             height=80,
             bgcolor="bluegrey500",
-            opacity=1,
+            opacity=0, # chage later => change this to 0 and reverse when called
             border_radius=40,
             margin=margin.only(left=-20, right=-20),
             animate=animation.Animation(400,"decelerate"),
             animate_opacity=200,
             padding=padding.only(top=45,bottom=45),
+            content=Column(
+                horizontal_alignment=CrossAxisAlignment.CENTER,
+                controls=[
+                    TextField(
+                        height=48,
+                        width=255,
+                        filled=True,
+                        text_size=12,
+                        color="black",
+                        border_color="transparent",
+                        hint_text="Description...",
+                        hint_style=TextStyle(size=11, color="black"),
+                    ),
+                    IconButton(
+                        content=Text("Add Task"),
+                        width=180,
+                        height=44,
+                        on_click=self.func, # pass function here
+                        style=ButtonStyle(
+                            bgcolor={"":"black"},
+                            shape={
+                                "": RoundedRectangleBorder(radius=8),
+                            },
+                        ),
+                    ),                    
+                ],
+            ),
         )
-            
+
+class CreateTask(UserControl):
+    def __init__(self, task:str, date:str, func1, func2):
+        # create two arguments, so we can pass in the delete function and edit function when we create an instance of this
+        self.task = task
+        self.date = date
+        self.func1 = func1
+        self.func2 = func2
+        super().__init__()
+
+    def TaskDeleteEdit(self, name, color, func):
+        return IconButton(
+            icon=name,
+            width=30,
+            icon_size=18,
+            icon_color=color,
+            opacity=0,
+            animate_opacity=200,
+            # to use it, we need to keep it in our delete and edit iconbuttons
+            on_click=lambda e: func(self.GetContainerInstance()),
+        )
+
+    # we need a final thing from here, and that is the instance itself.
+    # we need the instande identifier so that we can delete it needs to be delete
+    def GetContainerInstance(self):
+        return self # we return the self instance
+
+    def ShowIcons(self, e):
+        if e.data == "true":
+            # these are the index's of each icon
+            (
+                e.control.content.controls[1].controls[0].opacity,
+                e.control.content.controls[1].controls[1].opacity,
+            ) = (1,1)        
+        else:
+            (
+                e.control.content.controls[1].controls[0].opacity,
+                e.control.content.controls[1].controls[1].opacity,
+            ) = (0,0)
+        e.control.content.update()
+
+    def build(self):
+        return Container(
+            width=280,
+            height=60,
+            border_radius=8,
+            on_hover=lambda e: self.ShowIcons(e), # Change later
+            clip_behavior=ClipBehavior.HARD_EDGE,
+            padding=10,
+            content=Row(
+                alignment=MainAxisAlignment.SPACE_BETWEEN,
+                controls=[
+                    Column(
+                        spacing=1,
+                        alignment=MainAxisAlignment.CENTER,
+                        controls=[
+                            Text(value=self.task, size=10),
+                            Text(value=self.date, size=9, color='white54'),
+                        ],
+                    ),
+                    # Icons Delete and Edit
+                    Row(
+                        spacing=0,
+                        alignment=MainAxisAlignment.CENTER,
+                        controls=[
+                            self.TaskDeleteEdit(icons.DELETE_ROUNDED, 'red500', self.func1),
+                            self.TaskDeleteEdit(icons.EDIT_ROUNDED, 'white70', self.func2),
+                        ]
+                    )
+                ],
+            ),
+        )
+
 def main(page: Page):
     page.horizontal_alignment = "center"
     page.vertical_alignment = "center"
+
+    def AddTaskToScreen(e):
+        # now, everytime the users adds a task, we need to fecth the data and output it to the main column...
+        # there are 2 data we need: the task and the date
+        dateTime = datetime.now().strftime("%b %d, %Y %I:%M")
+
+        # now recall that we set the form container to form variable.
+        # We can use now to see if there's any content in the textfield
+        if form.content.controls[0].value: # this checks the textfield's value
+            _main_column_.controls.append(
+                #here, we can create an instance od CreateTask() class...
+                CreateTask(
+                    #Now, it takes two arguments
+                    form.content.controls[0].value, # task description...
+                    dateTime,
+                    # now, the instance takes  two more arguments when called...
+                    DeleteFunction,
+                    UpdateFunciton,
+                )
+            )
+            _main_column_.update()
+
+            # we can recall the show.hide function for the form here
+            CreateToDoTask(e)
+
+    def DeleteFunction(e):
+        # when we want to delete, recall that these instances are in a list => so that means we can simply remove them when we want to
+        print(e)
+        _main_column_.controls.remove(e) # e is the instance itself
+        _main_column_.update()        
+
+    def UpdateFunciton(e):
+        print(e)
+        # The update needs a little bit more work...
+        # we want ti update from the form, so we need to pass whatever the user had from the instance back to the form, 
+        # then change the functions and pass it back again...
+        form.height, form.opacity = 200, 1
+        (
+            form.content.controls[0].value,
+            # here we are chaning the button function and name...
+            # we need to change it from add task to update and so on...
+            form.content.controls[1].content.value,
+            form.content.controls[1].on_click,
+        ) = (
+            e.controls[0]
+            .content.controls[0]
+            .controls[0]
+            .value, # this is the instance value of the task
+            "Update",
+            lambda _: FinalizeUpdate(e),
+        )
+        form.update()
+
+        # once the user edits, we need to send the correct data back
+
+    def FinalizeUpdate(e):
+        # we can simply reverse the values from above
+        e.controls[0].content.controls[0].controls[0].value = form.content.controls[0].value
+        e.controls[0].content.update()
+        # so we can hide the container
+        CreateToDoTask(e)
 
     # function to show/hide form container
     def CreateToDoTask(e):
         
         # when we click the ADD iconbutton...
         if form.height != 200:
-            form.height = 200            
+            form.height, form.opacity = 200, 1
         else:
-            form.height = 80
+            form.height, form.opacity = 80, 0
+            # we can remove the values from the texfield to...
+            form.content.controls[0].value =  None
+            form.content.controls[1].content.value =  "Add Text"
+            form.content.controls[1].on_click = lambda e: AddTaskToScreen(e)
         form.update()
         
         
@@ -89,16 +256,17 @@ def main(page: Page):
                             alignment=MainAxisAlignment.CENTER,
                             expand=True,
                             controls=[
-                                #main column here
+                                #main column here...
                                 _main_column_,
 
-                                # form class here
-                                FormContainer()
-                            ]
-                        )
+                                # form class here...
+                                # pass in the argument
+                                FormContainer(lambda e: AddTaskToScreen(e)),
+                            ],
+                        ),
                     )
-                ]
-            )
+                ],
+            ),
 
         )
     )
