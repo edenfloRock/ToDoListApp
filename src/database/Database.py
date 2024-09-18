@@ -22,7 +22,7 @@ class Database:
             db (sqlite3.Connection): Objeto de conexión a la base de datos.
         """
         try:
-            db = sqlite3.connect("todo.db")
+            db = sqlite3.connect("../data/todo.db")
             c = db.cursor()
             c.execute(
                 """
