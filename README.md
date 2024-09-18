@@ -1,6 +1,12 @@
-# ToDo List App with SQL Lite
+# To-Do List App with SQL Lite
 
 This project is simple ToDo List App using SQL Lite.
+
+To-Do App created with Flet.
+Some notes:
+- This is a full app => UI + Database function
+- Slighlty longer video but with more explanations.
+- Database is local with sqlite3
 
 
 - Download project

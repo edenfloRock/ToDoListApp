@@ -1,128 +1,11 @@
-#Modules
+# app.py
 import flet
 from flet import *
+
 from datetime import datetime
-import sqlite3 
-
-# Let's create the form class first so we can get some data
-class FormContainer(UserControl):
-    # At this point, we can pass in a function from the main() so we can expand. minimize the format
-    # go back to the FormContainer() and add a argument as such...
-    def __init__(self, func):
-        self.func = func
-        super().__init__()
-
-    def build(self):
-        return Container(
-            width=280,
-            height=80,
-            bgcolor="bluegrey500",
-            opacity=0, # chage later => change this to 0 and reverse when called
-            border_radius=40,
-            margin=margin.only(left=-20, right=-20),
-            animate=animation.Animation(400,"decelerate"),
-            animate_opacity=200,
-            padding=padding.only(top=45,bottom=45),
-            content=Column(
-                horizontal_alignment=CrossAxisAlignment.CENTER,
-                controls=[
-                    TextField(
-                        height=48,
-                        width=255,
-                        filled=True,
-                        text_size=12,
-                        color="black",
-                        border_color="transparent",
-                        hint_text="Description...",
-                        hint_style=TextStyle(size=11, color="black"),
-                    ),
-                    IconButton(
-                        content=Text("Add Task"),
-                        width=180,
-                        height=44,
-                        on_click=self.func, # pass function here
-                        style=ButtonStyle(
-                            bgcolor={"":"black"},
-                            shape={
-                                "": RoundedRectangleBorder(radius=8),
-                            },
-                        ),
-                    ),                    
-                ],
-            ),
-        )
-
-class CreateTask(UserControl):
-    def __init__(self, task:str, date:str, func1, func2):
-        # create two arguments, so we can pass in the delete function and edit function when we create an instance of this
-        self.task = task
-        self.date = date
-        self.func1 = func1
-        self.func2 = func2
-        super().__init__()
-
-    def TaskDeleteEdit(self, name, color, func):
-        return IconButton(
-            icon=name,
-            width=30,
-            icon_size=18,
-            icon_color=color,
-            opacity=0,
-            animate_opacity=200,
-            # to use it, we need to keep it in our delete and edit iconbuttons
-            on_click=lambda e: func(self.GetContainerInstance()),
-        )
-
-    # we need a final thing from here, and that is the instance itself.
-    # we need the instande identifier so that we can delete it needs to be delete
-    def GetContainerInstance(self):
-        return self # we return the self instance
-
-    def ShowIcons(self, e):
-        if e.data == "true":
-            # these are the index's of each icon
-            (
-                e.control.content.controls[1].controls[0].opacity,
-                e.control.content.controls[1].controls[1].opacity,
-            ) = (1,1)        
-        else:
-            (
-                e.control.content.controls[1].controls[0].opacity,
-                e.control.content.controls[1].controls[1].opacity,
-            ) = (0,0)
-        e.control.content.update()
-
-    def build(self):
-        return Container(
-            width=280,
-            height=60,
-            border_radius=8,
-            on_hover=lambda e: self.ShowIcons(e), # Change later
-            clip_behavior=ClipBehavior.HARD_EDGE,
-            padding=10,
-            content=Row(
-                alignment=MainAxisAlignment.SPACE_BETWEEN,
-                controls=[
-                    Column(
-                        spacing=1,
-                        alignment=MainAxisAlignment.CENTER,
-                        controls=[
-                            Text(value=self.task, size=10),
-                            Text(value=self.date, size=9, color='white54'),
-                        ],
-                    ),
-                    # Icons Delete and Edit
-                    Row(
-                        spacing=0,
-                        alignment=MainAxisAlignment.CENTER,
-                        controls=[
-                            self.TaskDeleteEdit(icons.DELETE_ROUNDED, 'red500', self.func1),
-                            self.TaskDeleteEdit(icons.EDIT_ROUNDED, 'white70', self.func2),
-                        ]
-                    )
-                ],
-            ),
-        )
+from database.Database import Database
+from ui.form import FormContainer
+from ui.task import CreateTask
 
 def main(page: Page):
     page.horizontal_alignment = "center"
@@ -132,6 +15,19 @@ def main(page: Page):
         # now, everytime the users adds a task, we need to fecth the data and output it to the main column...
         # there are 2 data we need: the task and the date
         dateTime = datetime.now().strftime("%b %d, %Y %I:%M")
+
+        # we can use the db here for the starters...
+        # first, open a conneccion to the database
+        db_instance = Database()
+        db = db_instance.ConnectToDatabase() # this returns the db
+        db_instance.InsertDatabase((form.content.controls[0].value, dateTime))
+        # we have both values, one the date and time and the other user task
+        #finally close the connect
+        db.close()
+
+        # we could also place the db functions within the if statement
+
+
 
         # now recall that we set the form container to form variable.
         # We can use now to see if there's any content in the textfield
@@ -151,6 +47,10 @@ def main(page: Page):
 
             # we can recall the show.hide function for the form here
             CreateToDoTask(e)
+        else:
+            db.close() # make sure it closes even if there is no user input
+            pass
+
 
     def DeleteFunction(e):
         # when we want to delete, recall that these instances are in a list => so that means we can simply remove them when we want to
@@ -276,6 +176,33 @@ def main(page: Page):
     # We can set the long element index as a variable so it can be called faster and easier.
     form = page.controls[0].content.controls[0].content.controls[1].controls[0]
     # now we can call form whenever we want to do something with it...
+
+    # now to display it, we need to read the database
+    # another note: Flet keeps on refreshing when we call the database functions, this could be from the code or from flet itself, but i should be adressed...
+    db_instance = Database()
+
+    db = db_instance.ConnectToDatabase
+    
+    #now remember that the ReadDatabase function returns the records...
+    # note: return is a tuple data type
+    # note: we may want to display the records in reverse order, meaning the new records first followed by the oldest last...
+    # using [::-1] revereses a list
+    for task in db_instance.ReadDatabase()[::-1]:
+        # let's see if the task are being saved...
+        print (task)
+        # let's add these the to the screen now
+        _main_column_.controls.append(
+            # same process as before: we create an instance of this class...
+            CreateTask(
+                task[0], # first item of the returned tuple
+                task[1],
+                DeleteFunction,
+                UpdateFunciton,
+            )
+        )
+    _main_column_.update()
+
+
 
 
 if __name__ == '__main__':
