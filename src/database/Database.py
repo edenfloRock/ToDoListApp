@@ -85,6 +85,9 @@ class Database:
         Retorna:
             None
         """
+        print("Updating...")
+        print("New value:" + value[0])
+        print("Old value:" + value[1])
         c = self.db.cursor()
         c.execute("UPDATE tasks SET Task=? WHERE Task=?", value)
         self.db.commit()

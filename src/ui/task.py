@@ -46,6 +46,7 @@ class CreateTask(UserControl):
         return Container(
             width=280,
             height=60,
+            border=border.all(0.85, "white54"),
             border_radius=8,
             on_hover=lambda e: self.ShowIcons(e), # Change later
             clip_behavior=ClipBehavior.HARD_EDGE,
