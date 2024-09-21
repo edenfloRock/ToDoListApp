@@ -20,7 +20,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # if Error libmpv.so.1
-s udo apt install libmpv-dev
+sudo apt install libmpv-dev
 #find files libmpv
 sudo find / -name "libmpv.so*"
 # create link
