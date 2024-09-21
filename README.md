@@ -18,6 +18,14 @@ git clone
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# if Error libmpv.so.1
+s udo apt install libmpv-dev
+#find files libmpv
+sudo find / -name "libmpv.so*"
+# create link
+sudo ln -s /usr/lib/x86_64-linux-gnu/libmpv.so /usr/lib/libmpv.so.1
+
 ```
 
 - Run application
