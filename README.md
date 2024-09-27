@@ -12,6 +12,7 @@ Some notes:
 - Download project
 ```sh
 git clone
+cd ToDoListApp
 ```
 - Create virtual environment and install dependencies:
 ```sh
@@ -30,5 +31,6 @@ sudo ln -s /usr/lib/x86_64-linux-gnu/libmpv.so /usr/lib/libmpv.so.1
 
 - Run application
 ```sh
+cd src
 flet -r app.py
 ```
